@@ -1,43 +1,61 @@
 // Returns the given value. Seems pointless perhaps but see its use below for providing a default, no-op callback.
 const identity = function(val) {
-  // Your code goes here
+  return val;
 };
 
 // Returns the first n elements of the given array.
 const first = function(array, n = 1) {
-  // Your code goes here
+  return n === 1 ? array[0] : array.slice(0, n);
 };
 
 // Returns the last n elements of the given array.
 const last = function(array, n = 1) {
-  // Your code goes here
+  return n === 1 ? array[array.length - 1] : array.slice(Math.max(0, array.length - n));
 };
 
 // see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf
-const indexOf = function(array, target, fromIndex=0) {
-  // Your code goes here
+const indexOf = function(array, target, fromIndex = 0) {
+  for (let index = fromIndex; index < array.length; index++) {
+    if (array[index] === target) {
+      return index;
+    }
+  }
+  return -1;
 };
 
 const isArrayLike = function(obj) {
-  // Your code goes here
+  const length = obj['length'];
+  return typeof length === 'number' && length >= 0;
 };
 
 // The cornerstone of a functional library -- iterate all elements, pass each to a callback function.
 // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach
-const each = function(obj, callback=identity) {
-  // Your code goes here
+const each = function(obj, callback = identity) {
+  if (isArrayLike(obj)) {
+    for (let index = 0; index < obj.length; index++) {
+      callback(obj[index], index, obj);
+    }
+  } else {
+    for (let key in obj) {
+      callback(obj[key], key, obj);
+    }
+  }
 };
 
 // Return the results of applying the callback to each element.
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map
-const map = function(obj, callback=identity) {
-  // Your code goes here
+const map = function(obj, callback = identity) {
+  const result = [];
+  each (obj, (currentValue, currentIndexOrKey, currentObj) => {
+    result.push(callback(currentValue, currentIndexOrKey, currentObj));
+  })
+  return result;
 };
 
 // Return an array of the values o a certain property in the collection.
 // E.g. given an array of people objects, return an array of just their ages.
 const pluck = function(obj, key) {
-  // Your code goes here
+  return map(obj, item => item[key]);
 };
 
 // Reduces collection to a value which is the accumulated result of running
@@ -46,38 +64,63 @@ const pluck = function(obj, key) {
 // is not given, the first element of the collection is used as the initial
 // value. The callback is invoked with four arguments:
 // (accumulator, value, index|key, collection).
-const reduce = function(obj, callback=identity, initialValue) {
-  // Your code goes here
+const reduce = function(obj, callback = identity, initialValue) {
+  let acc = initialValue;
+  let initializing = acc === undefined;
+  each (obj, (currentValue, currentIndexOrKey, currentObj) => {
+    if (initializing) {
+      initializing = false;
+      acc = currentValue;
+    } else {
+      acc = callback(acc, currentValue, currentIndexOrKey, currentObj);
+    }
+  });
+  return acc;
 };
 
 // Return true if the object contains the target.
 const contains = function(obj, target) {
-  // Your code goes here
+  return reduce (obj, (wasFound, item) => {
+    return wasFound || item === target;
+  }, false)
 };
 
 // Return true if all the elements / object values are accepted by the callback.
-const every = function(obj, callback=identity) {
-  // Your code goes here
+const every = function(obj, callback = identity) {
+  return reduce (obj, (allPassed, item) => {
+    return allPassed && !!callback(item);
+  }, true)
 };
 
 // Return true if even 1 element / object value is accepted by the callback.
-const some = function(obj, callback=identity) {
-  // Your code goes here
+const some = function(obj, callback = identity) {
+  return reduce (obj, (somePassed, item) => {
+    return somePassed || !!callback(item);
+  }, false)
 };
 
 // Return an array with all elements / object values that are accepted by the callback.
-const filter = function(obj, callback=identity) {
-  // Your code goes here
+const filter = function(obj, callback = identity) {
+  const result = [];
+  each (obj, currentValue => {
+    if (callback(currentValue)) {
+      result.push(currentValue);
+    }
+  });
+  return result;
 };
 
 // Return object without the elements / object valuesthat were rejected by the callback.
-const reject = function(arr, callback=identity) {
-  // Your code goes here
+const reject = function(arr, callback = identity) {
+  return filter(arr, item => !callback(item))
 };
 
 // De-duplicates (de-dups) the elements / object values.
 const uniq = function(obj) {
-  // Your code goes here
+  const wasFound = {};
+  return filter(obj, item => {
+    return !(item in wasFound) && (wasFound[item] = true);
+  })
 };
 
 
